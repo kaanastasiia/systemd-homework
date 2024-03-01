@@ -1,21 +1,23 @@
+#Домашнее задание выполнялось на VM OracleLinux 9 в VirtualBox
 
+#переходим в директорию /etc/sysconfig и создаем необходимые переменные
 [nastya@oraclelinuxlab ~]$ cd /etc/sysconfig/
-
 [nastya@oraclelinuxlab ~]$ sudo vim watchlog
 #variables for the watchlog service
 
 WORD="ALERT"
 LOG=/var/log/watchlog.log
 
+#переходим в директорию /var/log и создаем лог-файл с ключевым словом
 [nastya@oraclelinuxlab ~]$ cd /var/log
-[nastya@oraclelinuxlab ~]$ udo touch watchlog.log
+[nastya@oraclelinuxlab ~]$ sudo touch watchlog.log
 [nastya@oraclelinuxlab ~]$ sudo vim watchlog.log
 [nastya@oraclelinuxlab ~]$ cat watchlog.log 
 some log entries
 ALERT
 some more log entries
 
-
+#создаем скрипт в /usr/local/bin, так как скрипты, написанные пользователем, рекомендуется помещать туда
 [nastya@oraclelinuxlab ~]$ cd /usr/local/bin/
 [nastya@oraclelinuxlab ~]$ sudo touch watchlog.sh
 [nastya@oraclelinuxlab ~]$ sudo vim watchlog.sh  
@@ -35,7 +37,7 @@ else
 	exit 0
 fi
  
-
+#создаем юнит-файл для сервиса watchlog.service
 [nastya@oraclelinuxlab ~]$ cd /etc/systemd/system/
 [nastya@oraclelinuxlab ~]$ sudo touch watchlog.service
 [nastya@oraclelinuxlab ~]$ sudo vim watchlog.service
@@ -51,6 +53,7 @@ ExecStart=/usr/local/bin/watchlog.sh $WORD $LOG
 [Install]
 WantedBy=multi.user.target
 
+#создаем юнит-файл для таймера watchlog.timer
 [nastya@oraclelinuxlab ~]$ sudo touch watchlog.timer
 [nastya@oraclelinuxlab ~]$ sudo vim watchlog.timer
 [nastya@oraclelinuxlab ~]$ cat watchlog.timer
@@ -65,7 +68,8 @@ OnUnitActiveSec=30
 [Install]
 WantedBy=timers.target
 
-
+#перечитываем юнит-файлы systemd и запускаем сервис watchlog, проверяем логи. Ключевое слово найдено
+[nastya@oraclelinuxlab ~]$ sudo systemctl daemon-reload
 [nastya@oraclelinuxlab ~]$ sudo systemctl start watchlog.service 
 [nastya@oraclelinuxlab ~]$ sudo tail -f /var/log/messages
 Mar  1 19:23:45 oraclelinuxlab systemd[1]: Started Fingerprint Authentication Daemon.
