@@ -1,0 +1,82 @@
+
+[nastya@oraclelinuxlab ~]$ cd /etc/sysconfig/
+
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog
+#variables for the watchlog service
+
+WORD="ALERT"
+LOG=/var/log/watchlog.log
+
+[nastya@oraclelinuxlab ~]$ cd /var/log
+[nastya@oraclelinuxlab ~]$ udo touch watchlog.log
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog.log
+[nastya@oraclelinuxlab ~]$ cat watchlog.log 
+some log entries
+ALERT
+some more log entries
+
+
+[nastya@oraclelinuxlab ~]$ cd /usr/local/bin/
+[nastya@oraclelinuxlab ~]$ sudo touch watchlog.sh
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog.sh  
+[nastya@oraclelinuxlab ~]$ sudo chmod +x watchlog.sh
+[nastya@oraclelinuxlab ~]$ sudo cat watchlog.sh  
+#!/bin/bash
+
+WORD=$1
+LOG=$2
+DATE=`date`
+
+if grep $WORD $LOG &> /dev/null
+then
+	logger "$DATE: keywords are FOUND!"
+else
+	echo "No keywords were found!"
+	exit 0
+fi
+ 
+
+[nastya@oraclelinuxlab ~]$ cd /etc/systemd/system/
+[nastya@oraclelinuxlab ~]$ sudo touch watchlog.service
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog.service
+[nastya@oraclelinuxlab ~]$ cat watchlog.service
+[Unit]
+Description=watchlog.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/watchlog
+ExecStart=/usr/local/bin/watchlog.sh $WORD $LOG
+
+[Install]
+WantedBy=multi.user.target
+
+[nastya@oraclelinuxlab ~]$ sudo touch watchlog.timer
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog.timer
+[nastya@oraclelinuxlab ~]$ cat watchlog.timer
+[Unit]
+Description=timer for the watchlog.service
+Requires=watchlog.service
+
+[Timer]
+Unit=watchlog.service
+OnUnitActiveSec=30
+
+[Install]
+WantedBy=timers.target
+
+
+[nastya@oraclelinuxlab ~]$ sudo systemctl start watchlog.service 
+[nastya@oraclelinuxlab ~]$ sudo tail -f /var/log/messages
+Mar  1 19:23:45 oraclelinuxlab systemd[1]: Started Fingerprint Authentication Daemon.
+Mar  1 19:24:15 oraclelinuxlab systemd[1]: fprintd.service: Deactivated successfully.
+Mar  1 19:25:48 oraclelinuxlab systemd[1960]: Started VTE child process 4895 launched by gnome-terminal-server process 2620.
+Mar  1 19:31:01 oraclelinuxlab cupsd[936]: REQUEST localhost - - "POST / HTTP/1.1" 200 185 Renew-Subscription successful-ok
+Mar  1 19:33:19 oraclelinuxlab systemd[1]: Starting Fingerprint Authentication Daemon...
+Mar  1 19:33:19 oraclelinuxlab systemd[1]: Started Fingerprint Authentication Daemon.
+Mar  1 19:33:22 oraclelinuxlab systemd[1]: Starting watchlog.service...
+Mar  1 19:33:22 oraclelinuxlab root[5084]: Fri Mar  1 07:33:22 PM MSK 2024: keywords are FOUND!
+Mar  1 19:33:22 oraclelinuxlab systemd[1]: watchlog.service: Deactivated successfully.
+Mar  1 19:33:22 oraclelinuxlab systemd[1]: Finished watchlog.service.
+
+
