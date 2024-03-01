@@ -2,7 +2,7 @@
 
 #переходим в директорию /etc/sysconfig и создаем необходимые переменные
 [nastya@oraclelinuxlab ~]$ cd /etc/sysconfig/
-[nastya@oraclelinuxlab ~]$ sudo vim watchlog
+[nastya@oraclelinuxlab ~]$ sudo vim watchlog-vars
 #variables for the watchlog service
 
 WORD="ALERT"

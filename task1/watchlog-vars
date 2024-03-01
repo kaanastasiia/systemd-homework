@@ -1,0 +1,4 @@
+#variables for the watchlog service
+
+WORD="ALERT"
+LOG=/var/log/watchlog.log

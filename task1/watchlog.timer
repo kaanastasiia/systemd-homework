@@ -1,0 +1,10 @@
+[Unit]
+Description=timer for the watchlog.service
+Requires=watchlog.service
+
+[Timer]
+Unit=watchlog.service
+OnUnitActiveSec=30
+
+[Install]
+WantedBy=timers.target
