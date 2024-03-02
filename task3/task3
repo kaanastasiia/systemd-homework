@@ -1,3 +1,7 @@
+#Домашнее задание выполнялось на VM OracleLinux9 в VirtualBox
+
+#создадим директорию для httpd сервиса, скопируем в нее юнит-файл из /usr/lib/systemd/system/httpd.service
+#в скопированный юнит-файл добавим EnvironmetFile  
 [nastya@oraclelinuxlab ~]$ sudo mkdir /etc/systemd/system/httpd.service.d
 [nastya@oraclelinuxlab ~]$ sudo su
 [root@oraclelinuxlab ~]# sudo cat /usr/lib/systemd/system/httpd.service > /etc/systemd/system/httpd.service.d/override.conf
@@ -37,7 +41,8 @@ OOMPolicy=continue
 [Install]
 WantedBy=multi-user.target
 
-
+#создадим два файла с нужными переменными
+[root@oraclelinuxlab sysconfig]# cd /etc/sysconfig
 [root@oraclelinuxlab sysconfig]# vim httpd-first
 [root@oraclelinuxlab sysconfig]# vim httpd-second
 [root@oraclelinuxlab sysconfig]# cat httpd-first 
@@ -46,9 +51,12 @@ OPTIONS=-f conf/first.conf
 [root@oraclelinuxlab sysconfig]# cat httpd-second 
 OPTIONS=-f conf/second.conf
 
+#добавим два конфигурационных файлы в /etc/httpd/conf
 [root@oraclelinuxlab sysconfig]# cd /etc/httpd/conf
 [root@oraclelinuxlab conf]# cat httpd.conf > first.conf
 [root@oraclelinuxlab conf]# cat httpd.conf > second.conf
+
+#внесем изменения во второй файл, добавив PidFile и отредактируя ListenPort
 [root@oraclelinuxlab conf]# vim second.conf 
 [root@oraclelinuxlab conf]# cat second.conf 
 
@@ -57,6 +65,7 @@ PidFile /var/run/httpd-second.pid
 
 Listen 8080
 
+#запустим сервисы с рарзными конфигурационными файлами и валидируем, что они запущены
 [root@oraclelinuxlab conf]# systemctl daemon-reload 
 [root@oraclelinuxlab conf]# systemctl start httpd@first
 [root@oraclelinuxlab conf]# systemctl start httpd@second
@@ -81,7 +90,6 @@ Listen 8080
              ├─38022 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
              ├─38023 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
              └─38024 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
-
 [root@oraclelinuxlab conf]# systemctl status httpd@second
 ● httpd@second.service - The Apache HTTP Server
      Loaded: loaded (/usr/lib/systemd/system/httpd@.service; disabled; >
@@ -103,7 +111,6 @@ Listen 8080
              ├─38245 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
              ├─38246 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
              └─38247 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
-
 [root@oraclelinuxlab ~]# ss -tnlp | grep httpd
 LISTEN 0      511                *:80               *:*    users:(("httpd",pid=38024,fd=4),("httpd",pid=38023,fd=4),("httpd",pid=38022,fd=4),("httpd",pid=38021,fd=4),("httpd",pid=38019,fd=4))
 LISTEN 0      511                *:8080             *:*    users:(("httpd",pid=38247,fd=4),("httpd",pid=38246,fd=4),("httpd",pid=38245,fd=4),("httpd",pid=38244,fd=4),("httpd",pid=38242,fd=4))
