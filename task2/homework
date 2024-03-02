@@ -1,5 +1,10 @@
+#Домашнее задание выполнялось на VM centos7 в VirtualBox
+
+#устанавливаем необходимый репозиторий и пакеты
 [nastya@centos7lab ~]$ sudo yum install epel-release
 [nastya@centos7lab ~]$ sudo yum install spawn-fcgi php php-cli mod_fcgid httpd -y
+
+#раскоментируем переменные в /etc/sysconfig/spawn-fcgi
 [nastya@centos7lab ~]$ sudo vim /etc/sysconfig/spawn-fcgi 
 [nastya@centos7lab ~]$ sudo cat /etc/sysconfig/spawn-fcgi 
 # You must set some working options before the "spawn-fcgi" service will work.
@@ -10,6 +15,8 @@
 # Example :
 SOCKET=/var/run/php-fcgi.sock
 OPTIONS="-u apache -g apache -s $SOCKET -S -M 0600 -C 32 -F 1 -P /var/run/spawn-fcgi.pid -- /usr/bin/php-cgi"
+
+#напишем unit-файл для сервиса spawn-fcgi
 [nastya@centos7lab ~]$ sudo vim /etc/systemd/system/spawn-fcgi.service
 [nastya@centos7lab ~]$ sudo cat /etc/systemd/system/spawn-fcgi.service
 [Unit]
@@ -26,6 +33,7 @@ KillMode=process
 [Install]
 WantedBy=multi-user.target
 
+#запустим сервис и убедимся, что он работает
 [nastya@centos7lab ~]$ sudo systemctl daemon-reload
 [nastya@centos7lab ~]$ sudo systemctl start spawn-fcgi.service
 [nastya@centos7lab ~]$ sudo systemctl status spawn-fcgi.service
