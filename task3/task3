@@ -1,0 +1,110 @@
+[nastya@oraclelinuxlab ~]$ sudo mkdir /etc/systemd/system/httpd.service.d
+[nastya@oraclelinuxlab ~]$ sudo su
+[root@oraclelinuxlab ~]# sudo cat /usr/lib/systemd/system/httpd.service > /etc/systemd/system/httpd.service.d/override.conf
+[root@oraclelinuxlab ~]# vim /etc/systemd/system/httpd.service.d/override.conf
+[root@oraclelinuxlab ~]# cat /etc/systemd/system/httpd.service.d/override.conf
+# See httpd.service(8) for more information on using the httpd service.
+
+# Modifying this file in-place is not recommended, because changes
+# will be overwritten during package upgrades.  To customize the
+# behaviour, run "systemctl edit httpd" to create an override unit.
+
+# For example, to pass additional options (such as -D definitions) to
+# the httpd binary at startup, create an override unit (as is done by
+# systemctl edit) and enter the following:
+
+#	[Service]
+#	Environment=OPTIONS=-DMY_DEFINE
+
+[Unit]
+Description=The Apache HTTP Server
+Wants=httpd-init.service
+After=network.target remote-fs.target nss-lookup.target httpd-init.service
+Documentation=man:httpd.service(8)
+
+[Service]
+Type=notify
+Environment=LANG=C
+EnvironmentFile=/etc/sysconfig/httpd-%I
+ExecStart=/usr/sbin/httpd $OPTIONS -DFOREGROUND
+ExecReload=/usr/sbin/httpd $OPTIONS -k graceful
+# Send SIGWINCH for graceful stop
+KillSignal=SIGWINCH
+KillMode=mixed
+PrivateTmp=true
+OOMPolicy=continue
+
+[Install]
+WantedBy=multi-user.target
+
+
+[root@oraclelinuxlab sysconfig]# vim httpd-first
+[root@oraclelinuxlab sysconfig]# vim httpd-second
+[root@oraclelinuxlab sysconfig]# cat httpd-first 
+OPTIONS=-f conf/first.conf
+
+[root@oraclelinuxlab sysconfig]# cat httpd-second 
+OPTIONS=-f conf/second.conf
+
+[root@oraclelinuxlab sysconfig]# cd /etc/httpd/conf
+[root@oraclelinuxlab conf]# cat httpd.conf > first.conf
+[root@oraclelinuxlab conf]# cat httpd.conf > second.conf
+[root@oraclelinuxlab conf]# vim second.conf 
+[root@oraclelinuxlab conf]# cat second.conf 
+
+ServerRoot "/etc/httpd"
+PidFile /var/run/httpd-second.pid
+
+Listen 8080
+
+[root@oraclelinuxlab conf]# systemctl daemon-reload 
+[root@oraclelinuxlab conf]# systemctl start httpd@first
+[root@oraclelinuxlab conf]# systemctl start httpd@second
+[root@oraclelinuxlab conf]# systemctl status httpd@first
+● httpd@first.service - The Apache HTTP Server
+     Loaded: loaded (/usr/lib/systemd/system/httpd@.service; disabled; >
+     Active: active (running) since Sat 2024-03-02 18:06:29 MSK; 10s ago
+       Docs: man:httpd@.service(8)
+    Process: 38015 ExecStartPre=/bin/mkdir -m 710 -p /run/httpd/instanc>
+    Process: 38016 ExecStartPre=/bin/chown root.apache /run/httpd/insta>
+    Process: 38017 ExecStartPre=/bin/mkdir -m 700 -p /var/lib/httpd/ins>
+    Process: 38018 ExecStartPre=/bin/chown apache.apache /var/lib/httpd>
+   Main PID: 38019 (httpd)
+     Status: "Total requests: 0; Idle/Busy workers 100/0;Requests/sec: >
+      Tasks: 214 (limit: 9171)
+     Memory: 23.6M
+        CPU: 244ms
+     CGroup: /system.slice/system-httpd.slice/httpd@first.service
+             ├─38019 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+             ├─38020 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+             ├─38021 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+             ├─38022 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+             ├─38023 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+             └─38024 /usr/sbin/httpd -DFOREGROUND -f conf/first.conf
+
+[root@oraclelinuxlab conf]# systemctl status httpd@second
+● httpd@second.service - The Apache HTTP Server
+     Loaded: loaded (/usr/lib/systemd/system/httpd@.service; disabled; >
+     Active: active (running) since Sat 2024-03-02 18:06:34 MSK; 12s ago
+       Docs: man:httpd@.service(8)
+    Process: 38238 ExecStartPre=/bin/mkdir -m 710 -p /run/httpd/instanc>
+    Process: 38239 ExecStartPre=/bin/chown root.apache /run/httpd/insta>
+    Process: 38240 ExecStartPre=/bin/mkdir -m 700 -p /var/lib/httpd/ins>
+    Process: 38241 ExecStartPre=/bin/chown apache.apache /var/lib/httpd>
+   Main PID: 38242 (httpd)
+     Status: "Total requests: 0; Idle/Busy workers 100/0;Requests/sec: >
+      Tasks: 214 (limit: 9171)
+     Memory: 16.8M
+        CPU: 164ms
+     CGroup: /system.slice/system-httpd.slice/httpd@second.service
+             ├─38242 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+             ├─38243 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+             ├─38244 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+             ├─38245 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+             ├─38246 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+             └─38247 /usr/sbin/httpd -DFOREGROUND -f conf/second.conf
+
+[root@oraclelinuxlab ~]# ss -tnlp | grep httpd
+LISTEN 0      511                *:80               *:*    users:(("httpd",pid=38024,fd=4),("httpd",pid=38023,fd=4),("httpd",pid=38022,fd=4),("httpd",pid=38021,fd=4),("httpd",pid=38019,fd=4))
+LISTEN 0      511                *:8080             *:*    users:(("httpd",pid=38247,fd=4),("httpd",pid=38246,fd=4),("httpd",pid=38245,fd=4),("httpd",pid=38244,fd=4),("httpd",pid=38242,fd=4))
+
